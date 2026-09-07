@@ -26,37 +26,37 @@ const startDB = async () => {
   if (!process.env.NATS_CLUSTER_ID) {
     throw new Error('NATS CLUSTER ID must be define');
   }
-  try {
-    await natsWrapper.connect(
-      process.env.NATS_CLUSTER_ID,
-      process.env.NATS_CLIENT_ID,
-      process.env.NATS_URL
-    );
-    natsWrapper.client.on('close', () => {
-      console.log('Nats connection closed');
-      process.exit();
-    });
-    //on process interupt
-    process.on('SIGINT', () => natsWrapper.client.close());
+  await natsWrapper.connect(
+    process.env.NATS_CLUSTER_ID,
+    process.env.NATS_CLIENT_ID,
+    process.env.NATS_URL
+  );
+  natsWrapper.client.on('close', () => {
+    console.log('Nats connection closed');
+    process.exit();
+  });
+  //on process interupt
+  process.on('SIGINT', () => natsWrapper.client.close());
 
-    //on process termaination
-    process.on('SIGTERM', () => natsWrapper.client.close());
+  //on process termaination
+  process.on('SIGTERM', () => natsWrapper.client.close());
 
-    //intializing the ticketlisteners
+  //db must be up before any listener starts handling messages
+  await mongoose.connect(process.env.MONGO_URI);
 
-    new TicketCreatedListener(natsWrapper.client).listen();
-    new TicketUpdatedListener(natsWrapper.client).listen();
-    new ExpirationCompleteListener(natsWrapper.client).listen();
-    new PaymentCreatedListener(natsWrapper.client).listen();
+  //intializing the ticketlisteners
 
-    await mongoose.connect(process.env.MONGO_URI);
-  } catch (err) {
-    console.error(err);
-  }
+  new TicketCreatedListener(natsWrapper.client).listen();
+  new TicketUpdatedListener(natsWrapper.client).listen();
+  new ExpirationCompleteListener(natsWrapper.client).listen();
+  new PaymentCreatedListener(natsWrapper.client).listen();
 
   app.listen(5000, () => {
     console.log('listening on port 5000!!!!!');
   });
 };
 
-startDB();
+startDB().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

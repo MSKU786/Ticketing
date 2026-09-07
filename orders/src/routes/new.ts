@@ -55,7 +55,7 @@ router.post(
     });
 
     await orderBuild.save();
-    new OrderCreatedPublisher(natsWrapper.client).publish({
+    await new OrderCreatedPublisher(natsWrapper.client).publish({
       id: orderBuild.id,
       status: orderBuild.status,
       userId: orderBuild.userId,
