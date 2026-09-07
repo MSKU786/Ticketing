@@ -38,9 +38,14 @@ router.post(
       throw new BadRequestError('Cannot pay for cancelled order');
     }
 
+    if (order.status === OrderStatus.Complete) {
+      throw new BadRequestError('Order has already been paid for');
+    }
+
     const charge = await stripe.charges.create({
       currency: 'usd',
-      amount: order.price,
+      // stripe expects the smallest currency unit, i.e. cents
+      amount: Math.round(order.price * 100),
       source: token,
     });
 
@@ -50,7 +55,7 @@ router.post(
     });
 
     await payment.save();
-    new PaymentCreatedPublisher(natsWrapper.client).publish({
+    await new PaymentCreatedPublisher(natsWrapper.client).publish({
       id: payment.id,
       orderId,
       stripeId: charge.id,

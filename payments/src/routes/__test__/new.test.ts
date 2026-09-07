@@ -84,13 +84,38 @@ it('returns a 201 for valid inputs', async () => {
 
   const chargeOptions = (stripe.charges.create as jest.Mock).mock.calls[0][0];
   expect(chargeOptions.source).toEqual('tok_visa');
-  expect(chargeOptions.amount).toEqual(order.price);
+  // stripe is charged in cents, not dollars
+  expect(chargeOptions.amount).toEqual(order.price * 100);
   expect(chargeOptions.currency).toEqual('usd');
 
-  // const payment = await Payment.findOne({
-  //   orderId: order.id,
-  //   stripeId: chargeOptions!.id,
-  // });
+  const payment = await Payment.findOne({
+    orderId: order.id,
+    stripeId: 'ch_mock_id',
+  });
 
-  // expect(payment).not.toBeNull();
+  expect(payment).not.toBeNull();
+});
+
+it('returns a 400 when paying for an already completed order', async () => {
+  const userId = new mongoose.Types.ObjectId().toHexString();
+
+  const order = Order.build({
+    id: new mongoose.Types.ObjectId().toHexString(),
+    userId,
+    version: 0,
+    price: 20,
+    status: OrderStatus.Complete,
+  });
+  await order.save();
+
+  await request(app)
+    .post('/api/payments')
+    .set('Cookie', global.signin(userId))
+    .send({
+      token: 'tok_visa',
+      orderId: order.id,
+    })
+    .expect(400);
+
+  expect(stripe.charges.create).not.toHaveBeenCalled();
 });

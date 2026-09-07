@@ -19,6 +19,7 @@ const PaymentSchema = new mongoose.Schema(
     orderId: {
       required: true,
       type: String,
+      unique: true,
     },
     stripeId: {
       required: true,
