@@ -10,15 +10,14 @@ const startDB = async () => {
     throw new Error('Mongo URI must be defined');
   }
 
-  try {
-    await mongoose.connect('mongodb://auth-mongo-srv:27017/auth');
-  } catch (err) {
-    console.error(err);
-  }
+  await mongoose.connect(process.env.MONGO_URI);
 
   app.listen(4000, () => {
     console.log('listening on port 4000!!!!!');
   });
 };
 
-startDB();
+startDB().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
