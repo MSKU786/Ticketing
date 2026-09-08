@@ -35,8 +35,6 @@ export class OrderCancelledListener extends Listener<OrderCancelledEvent> {
       title: ticket.title,
     });
 
-    await new TicketUpdatedPublisher(this.client);
-
     // ack the message
     msg.ack();
   }

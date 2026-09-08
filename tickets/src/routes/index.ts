@@ -4,7 +4,8 @@ import { Ticket } from '../models/ticket';
 const router = express.Router();
 
 router.get('/api/tickets', async (req: Request, res: Response) => {
-  const tickets = await Ticket.find({ orderId: undefined });
+  // null matches docs where orderId is null OR absent, i.e. unreserved
+  const tickets = await Ticket.find({ orderId: null });
 
   return res.send(tickets);
 });

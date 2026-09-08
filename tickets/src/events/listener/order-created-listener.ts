@@ -34,8 +34,6 @@ export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
       title: ticket.title,
     });
 
-    await new TicketUpdatedPublisher(this.client);
-
     // ack the message
     msg.ack();
   }
