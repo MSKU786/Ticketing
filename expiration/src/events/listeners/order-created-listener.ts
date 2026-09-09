@@ -9,17 +9,21 @@ export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
 
   async onMessge(data: OrderCreatedEvent['data'], msg: Message) {
     const expiresAt = new String(data.expiresAt).toString();
-    const delay = new Date(expiresAt).getTime() - new Date().getTime();
+    // an order that already expired while the message sat in the queue
+    // must fire immediately, never with a negative delay
+    const delay = Math.max(
+      new Date(expiresAt).getTime() - new Date().getTime(),
+      0
+    );
 
     await expirationQueue.add(
       {
         orderId: data.id,
       },
       {
-        delay: 10000,
+        delay,
       }
     );
-    console.log('i wnat ot add some deelay over here', delay);
 
     msg.ack();
   }
