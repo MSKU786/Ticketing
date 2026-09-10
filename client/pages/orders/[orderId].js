@@ -21,7 +21,7 @@ const OrderShow = ({ order, currentUser }) => {
       setTimeLeft(Math.round(msLeft / 1000));
     };
     findTimeLeft();
-    const timerId = setInterval(findTimeLeft(), 1000);
+    const timerId = setInterval(findTimeLeft, 1000);
 
     return () => {
       clearInterval(timerId);
@@ -29,25 +29,26 @@ const OrderShow = ({ order, currentUser }) => {
   }, [order]);
 
   if (timeLeft < 0) {
-    return (
-      <div>
-        {' '}
-        Order Expired
-        <StripeCheckout
-          token={({ id }) => doRequest({ token: id })}
-          stripeKey="pk_test_51KbjevSEWskcY8jQGbybSbuCkZRLKEtG88galWqbOiPRVI42oaroOksYHHT6qVwqdIqzCju2Nw4lUifUslT4BnJb00zoDam2Er"
-          amount={order.ticket.price * 100}
-          email={currentUser.email}
-        />{' '}
-      </div>
-    );
+    return <div>Order Expired</div>;
   }
-  return <div>Time Left to pay: {timeLeft} seconds</div>;
+
+  return (
+    <div>
+      Time Left to pay: {timeLeft} seconds
+      <StripeCheckout
+        token={({ id }) => doRequest({ token: id })}
+        stripeKey="pk_test_51KbjevSEWskcY8jQGbybSbuCkZRLKEtG88galWqbOiPRVI42oaroOksYHHT6qVwqdIqzCju2Nw4lUifUslT4BnJb00zoDam2Er"
+        amount={order.ticket.price * 100}
+        email={currentUser.email}
+      />
+      {errors}
+    </div>
+  );
 };
 
 OrderShow.getInitialProps = async (context, client) => {
   const { orderId } = context.query;
-  const { data } = await client.get(`/api/order/${orderId}`);
+  const { data } = await client.get(`/api/orders/${orderId}`);
 
   return { order: data };
 };
